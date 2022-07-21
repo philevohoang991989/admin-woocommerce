@@ -18,11 +18,6 @@ export const Register = async (req: Request, res: Response)=>{
             message:"Password's do not match"
         })
     }
-    if(!body.phone.match(/^\d+\.?\d*$/)){
-        return res.status(400).send({
-            message:"phone not match"
-        })
-    }
 
     const repository = getManager().getRepository(User);
 
@@ -54,7 +49,7 @@ export const Login = async (req: Request, res: Response)=>{
     }
     const token = sign({
         id: user.id
-    },"secret")
+    },process.env.SECRET_KEY)
 
     res.cookie('jwt',token,{
         httpOnly: true,
@@ -67,20 +62,32 @@ export const Login = async (req: Request, res: Response)=>{
         message: 'success'
     });
 }
-// export const AuthenticatedUser = async (req: Request, res: Response)=>{
-//     const jwt = req.cookies['jwt'];
-//
-//     const payload: any = verify(jwt,"secret")
-//
-//     if(!payload){
-//         return res.status(401).send({
-//             message:'unauthenticated'
-//         })
-//     }
-//     const repository = getManager().getRepository(User);
-//
-//     const {password, ...user} = await repository.findOneBy(payload.id)
-//
-//     res.send(user)
-//
-// }
+export const AuthenticatedUser = async (req: Request, res: Response)=>{
+    try{
+        const jwt = req.cookies['jwt'];
+
+        const payload: any = verify(jwt,process.env.SECRET_KEY)
+
+        if(!payload){
+            return res.status(401).send({
+                message:'unauthenticated'
+            })
+        }
+        const repository = getManager().getRepository(User);
+
+        const {password, ...user} = await repository.findOneBy(payload.id)
+
+        res.send(user)
+    }catch (e){
+        return res.status(401).send({
+            message:'unauthenticated'
+        })
+    }
+}
+
+export const Logout = async (req: Request, res: Response)=>{
+   res.cookie('jwt','',{maxAge: 0});
+   res.send({
+       message: 'success'
+   })
+}
