@@ -1,0 +1,30 @@
+{
+  "name": "admin-woocommerce",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "nodemon index.ts"
+  },
+  "repository": "https://github.com/philevohoang991989/admin-woocommerce.git",
+  "author": "HOANGPHI <phi.le@gumiviet.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/cookie-parser": "^1.4.3",
+    "@types/cors": "^2.8.12",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/node": "^18.0.6",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "express-validation": "^4.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "mysql2": "^2.3.3",
+    "nodemon": "^2.0.18",
+    "reflect-metadata": "^0.1.13",
+    "ts-node": "^10.8.2",
+    "typeorm": "^0.3.7",
+    "typescript": "^4.7.4"
+  }
+}
