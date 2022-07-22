@@ -1,32 +1,21 @@
 import {Column, Entity, PrimaryGeneratedColumn, CreateDateColumn,UpdateDateColumn} from "typeorm";
 
 @Entity()
-export class User {
+export class Permissions {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({unique: true})
-    username: string ;
+    @Column()
+    name: string ;
 
     @Column()
-    password: string ;
+    description: string ;
 
     @Column()
-    avatar: string;
+    group: string;
 
     @Column()
-    full_name: string;
-
-    @Column({
-        unique: true
-    })
-    email: string;
-
-    @Column({unique: true})
-    phone: string;
-
-    @Column()
-    status: string ;
+    action: string;
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     created_at: Date;

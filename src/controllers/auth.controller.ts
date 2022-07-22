@@ -2,43 +2,35 @@ import {Request, Response} from "express";
 import bcyptjs from 'bcryptjs'
 import {RegisterValidation} from "../validation/register.validation";
 import {getManager} from "typeorm";
-import {sign, verify} from 'jsonwebtoken'
+import {sign} from 'jsonwebtoken'
 import {User} from "../models/useModel";
+import {httpStatusCodes,send_error} from  "../helper"
+import {bodyUser} from "../@types/global.type"
 
 export const Register = async (req: Request, res: Response)=>{
-    const body = req.body;
+    const body:bodyUser = req.body;
     const repository = getManager().getRepository(User);
     const {error} = RegisterValidation.validate(body);
-
-    const email = await repository.findOneBy({email: req.body.email});
-    const phone = await repository.findOneBy({phone: req.body.phone});
-    const username = await repository.findOneBy({username: req.body.username})
-    if(username){
-        return res.status(404).send({
-            message:'Username already exists'
-        })
-    }
-
-    if(email){
-        return res.status(404).send({
-            message: 'Email already exists'
-        })
-    }
-
-    if(phone){
-        return res.status(404).send({
-            message: 'Phone already exists'
-        })
-    }
-
     if(error){
-        return res.status(400).send(error.details)
+        return res.status(httpStatusCodes.BAD_REQUEST).send(error.details)
     }
 
     if(body.password !== body.password_confirm){
-        return  res.status(400).send({
+        return  res.status(httpStatusCodes.BAD_REQUEST).send({
             message:"Password's do not match"
         })
+    }
+    const email = await repository.findOneBy({email: req.body.email});
+    const phone = await repository.findOneBy({phone: req.body.phone});
+    const username = await repository.findOneBy({username: req.body.username})
+
+    const type_error = username?"Username":email?"Email":phone?"Phone":""
+
+    if(type_error && send_error(type_error)){
+        return res.send({
+            status: httpStatusCodes.NOT_FOUND,
+            message: `${type_error} already exists`
+        });
     }
 
     const {password, ...user} = await repository.save({
@@ -51,21 +43,26 @@ export const Register = async (req: Request, res: Response)=>{
         phone: body.phone,
         role: body.role,
     })
-
-    res.send(user);
+    res.send({
+        message: 'success',
+        status: httpStatusCodes.OK,
+        data: user
+    });
 }
 export const Login = async (req: Request, res: Response)=>{
     const repository = getManager().getRepository(User);
     const user = await repository.findOneBy({email: req.body.email});
     if(!user){
-        return res.status(404).send({
-            message: 'user not found'
-        })
+        return res.send({
+            message: 'user not found',
+            status: httpStatusCodes.NOT_FOUND,
+        });
     }
     if(!await bcyptjs.compare(req.body.password, user.password)){
-        return res.status(400).send({
-            message: 'invalid password'
-        })
+        return res.send({
+            message: 'invalid password',
+            status: httpStatusCodes.BAD_REQUEST,
+        });
     }
     const token = sign({
         id: user.id
@@ -76,27 +73,45 @@ export const Login = async (req: Request, res: Response)=>{
         maxAge: 24 * 60 * 60 * 1000
     })
 
-    const {password, ...data} = user
-
     res.send({
-        message: 'success'
+        message: 'success',
+        status: httpStatusCodes.OK,
+        data:{
+            access_token: token,
+            live_token: 24 * 60 * 60 * 1000
+        }
     });
 }
 
 export const UserList = async (req: Request, res: Response)=>{
     const repository = getManager().getRepository(User);
     const listUser = await repository.find();
-    res.send(listUser)
+    res.send(
+        {
+            message: 'success',
+            status: httpStatusCodes.OK,
+            data: listUser.map(user => {
+                const {password, ...data} = user;
+                return { data }
+            })
+        }
+    )
 }
 
 export const AuthenticatedUser = async (req: Request, res: Response)=>{
     const {password, ...user} = req['user']
-    res.send(user)
+    res.send({
+        message: 'success',
+        status: httpStatusCodes.OK,
+        data: user
+    })
 }
 
 export const Logout = async (req: Request, res: Response)=>{
    res.cookie('jwt','',{maxAge: 0});
    res.send({
-       message: 'success'
+       message: 'success',
+       status: httpStatusCodes.OK,
+       data:{}
    })
 }

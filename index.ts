@@ -10,7 +10,6 @@ createConnection().then(connection => {
     app.use(express.json());
     app.use(cookieParser());
 
-
     routes(app);
 
     app.listen(8000,()=>{
