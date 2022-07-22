@@ -4,7 +4,7 @@ import {RegisterValidation} from "../validation/register.validation";
 import {getManager} from "typeorm";
 import {sign} from 'jsonwebtoken'
 import {User} from "../models/useModel";
-import {httpStatusCodes,send_error} from  "../helper"
+import {httpStatusCodes} from  "../helper"
 import {bodyUser} from "../@types/global.type"
 
 export const Register = async (req: Request, res: Response)=>{
@@ -26,7 +26,7 @@ export const Register = async (req: Request, res: Response)=>{
 
     const type_error = username?"Username":email?"Email":phone?"Phone":""
 
-    if(type_error && send_error(type_error)){
+    if(type_error){
         return res.send({
             status: httpStatusCodes.NOT_FOUND,
             message: `${type_error} already exists`
@@ -83,21 +83,6 @@ export const Login = async (req: Request, res: Response)=>{
     });
 }
 
-export const UserList = async (req: Request, res: Response)=>{
-    const repository = getManager().getRepository(User);
-    const listUser = await repository.find();
-    res.send(
-        {
-            message: 'success',
-            status: httpStatusCodes.OK,
-            data: listUser.map(user => {
-                const {password, ...data} = user;
-                return { data }
-            })
-        }
-    )
-}
-
 export const AuthenticatedUser = async (req: Request, res: Response)=>{
     const {password, ...user} = req['user']
     res.send({
@@ -114,4 +99,19 @@ export const Logout = async (req: Request, res: Response)=>{
        status: httpStatusCodes.OK,
        data:{}
    })
+}
+
+export const UpdateInfo = async (req: Request, res: Response)=>{
+    const user = req['user']
+
+    const repository = getManager().getRepository(User);
+
+    await repository.update(user.id, req.body);
+
+    const {password, ...data} = await repository.findOneBy(user.id)
+    res.send({
+        message: 'success',
+        status: httpStatusCodes.OK,
+        data
+    })
 }
