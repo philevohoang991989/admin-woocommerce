@@ -7,19 +7,39 @@ import {User} from "../models/useModel";
 
 export const Register = async (req: Request, res: Response)=>{
     const body = req.body;
-
+    const repository = getManager().getRepository(User);
     const {error} = RegisterValidation.validate(body);
+
+    const email = await repository.findOneBy({email: req.body.email});
+    const phone = await repository.findOneBy({phone: req.body.phone});
+    const username = await repository.findOneBy({username: req.body.username})
+    if(username){
+        return res.status(404).send({
+            message:'Username already exists'
+        })
+    }
+
+    if(email){
+        return res.status(404).send({
+            message: 'Email already exists'
+        })
+    }
+
+    if(phone){
+        return res.status(404).send({
+            message: 'Phone already exists'
+        })
+    }
 
     if(error){
         return res.status(400).send(error.details)
     }
+
     if(body.password !== body.password_confirm){
         return  res.status(400).send({
             message:"Password's do not match"
         })
     }
-
-    const repository = getManager().getRepository(User);
 
     const {password, ...user} = await repository.save({
         username: body.username,
@@ -62,6 +82,13 @@ export const Login = async (req: Request, res: Response)=>{
         message: 'success'
     });
 }
+
+export const UserList = async (req: Request, res: Response)=>{
+    const repository = getManager().getRepository(User);
+    const listUser = await repository.find();
+    res.send(listUser)
+}
+
 export const AuthenticatedUser = async (req: Request, res: Response)=>{
     const {password, ...user} = req['user']
     res.send(user)
