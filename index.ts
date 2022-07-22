@@ -1,4 +1,4 @@
-import express, {Request, Response} from "express"
+import express from "express"
 import {routes} from "./src/routes"
 import {createConnection} from "typeorm";
 import cookieParser from "cookie-parser";

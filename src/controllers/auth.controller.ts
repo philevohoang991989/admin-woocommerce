@@ -11,6 +11,7 @@ export const Register = async (req: Request, res: Response)=>{
     const body:bodyUser = req.body;
     const repository = getManager().getRepository(User);
     const {error} = RegisterValidation.validate(body);
+   
     if(error){
         return res.status(httpStatusCodes.BAD_REQUEST).send(error.details)
     }
@@ -24,7 +25,7 @@ export const Register = async (req: Request, res: Response)=>{
     const phone = await repository.findOneBy({phone: req.body.phone});
     const username = await repository.findOneBy({username: req.body.username})
 
-    const type_error = username?"Username":email?"Email":phone?"Phone":""
+    const type_error = username ? "Username" : email ? "Email" : phone? "Phone" : ""
 
     if(type_error){
         return res.send({
@@ -41,7 +42,6 @@ export const Register = async (req: Request, res: Response)=>{
         email: body.email,
         status: body.status,
         phone: body.phone,
-        role: body.role,
     })
     res.send({
         message: 'success',
@@ -51,6 +51,7 @@ export const Register = async (req: Request, res: Response)=>{
 }
 export const Login = async (req: Request, res: Response)=>{
     const repository = getManager().getRepository(User);
+    const live_token = 24 * 60 * 60 * 1000
     const user = await repository.findOneBy({email: req.body.email});
     if(!user){
         return res.send({
@@ -70,7 +71,7 @@ export const Login = async (req: Request, res: Response)=>{
 
     res.cookie('jwt',token,{
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: live_token
     })
 
     res.send({
@@ -78,7 +79,7 @@ export const Login = async (req: Request, res: Response)=>{
         status: httpStatusCodes.OK,
         data:{
             access_token: token,
-            live_token: 24 * 60 * 60 * 1000
+            live_token: live_token
         }
     });
 }
@@ -109,6 +110,30 @@ export const UpdateInfo = async (req: Request, res: Response)=>{
     await repository.update(user.id, req.body);
 
     const {password, ...data} = await repository.findOneBy(user.id)
+    res.send({
+        message: 'success',
+        status: httpStatusCodes.OK,
+        data
+    })
+}
+
+export const UpdatePassword = async (req: Request, res: Response)=> {
+    const user = req['user']
+
+    if(req.body.password !== req.body.password_confirm){
+        return  res.status(httpStatusCodes.BAD_REQUEST).send({
+            message:"Password's do not match"
+        })
+    }
+
+    const repository = getManager().getRepository(User);
+
+    await repository.update(user.id,{
+        password: await bcyptjs.hash(req.body.password, 10)
+    });
+
+    const {password, ...data} = user;
+
     res.send({
         message: 'success',
         status: httpStatusCodes.OK,

@@ -1,4 +1,13 @@
-import {Column, Entity, PrimaryGeneratedColumn, CreateDateColumn,UpdateDateColumn} from "typeorm";
+import {
+    Column,
+    Entity,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
+    ManyToOne,
+    JoinColumn
+} from "typeorm";
+import {UserGroup} from './userGroupModal'
 
 @Entity()
 export class User {
@@ -27,6 +36,10 @@ export class User {
 
     @Column()
     status: string ;
+
+    @ManyToOne(()=> UserGroup)
+    @JoinColumn({name:"group_id"})
+    group: UserGroup
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     created_at: Date;
